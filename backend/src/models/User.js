@@ -24,9 +24,17 @@ const userSchema = new mongoose.Schema(
       default: "student",
     },
     fullName: { type: String },
-    school: { type: String },
+    school: { 
+      type: String, 
+      enum: ["SSE", "SHAS", "SBA"],
+      default: null
+    },
     major: { type: String, default: null }, // only for students
-    classification: { type: String, default: null }, // only for students
+    classification: { 
+      type: String, 
+      enum: ["Freshman", "Sophomore", "Junior", "Senior"],
+      default: null 
+    }, // only for students
   },
   { timestamps: true }
 );

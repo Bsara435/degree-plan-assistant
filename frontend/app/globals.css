@@ -15,8 +15,8 @@
   --primary-blue-dark: #023380;
 }
 
-@theme inline {
-  /* Brand Colors */
+/* Brand Colors */
+:root {
   --color-primary: var(--primary-blue);
   --color-primary-dark: var(--primary-blue-dark);
   --color-primary-light: var(--primary-blue-light);
@@ -49,3 +49,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+
+

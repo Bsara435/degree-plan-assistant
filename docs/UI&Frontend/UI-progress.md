@@ -229,12 +229,30 @@ box-shadow: 0 0 0 3px rgba(3, 69, 160, 0.1);
 
 ---
 
+---
+
+## Branding Assets
+
+### CLE Logo
+
+The application includes the CLE (Center for Language Enhancement) logo from Al Akhawayn University.
+
+- **Logo Source**: [CLE Logo (White Version)](https://cle.aui.ma/wp-content/uploads/2022/06/logo-cle-white.png)
+- **Usage**: Footer, partnership acknowledgments, about page
+- **Format**: PNG with transparent background
+- **Color**: White version for dark backgrounds
+
+**Logo Display**:
+```jsx
+<img 
+  src="https://cle.aui.ma/wp-content/uploads/2022/06/logo-cle-white.png" 
+  alt="CLE - Center for Language Enhancement Logo"
+  className="h-12 w-auto"
+/>
+```
+
+---
+
 **Last Updated**: October 18, 2025  
 **Designer**: Design Team  
 **Status**: ✅ Signup UI designed and ready for implementation
-
-
-##CLE Logo
-image.png
-link: https://cle.aui.ma/wp-content/uploads/2022/06/logo-cle-white.png
-
