@@ -10,9 +10,9 @@ const resourceSections = [
     title: "Academic Flowcharts",
     description: "Visual pathways to help you understand course sequencing for each program.",
     documents: [
-      { label: "Computer Science Flowchart", href: "/resources/flowcharts/cs.html" },
-      { label: "Business Administration Flowchart", href: "/resources/flowcharts/sba.html" },
-      { label: "Engineering Flowchart", href: "/resources/flowcharts/engineering.html" },
+      { label: "SSE", href: "/resources/flowcharts/cs.html" },
+      { label: "SBA", href: "/resources/flowcharts/sba.html" },
+      { label: "SHAS", href: "/resources/flowcharts/engineering.html" },
     ],
   },
   {

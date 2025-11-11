@@ -103,6 +103,29 @@ export default function LoginVerify() {
 
       const response = await authAPI.loginStep2(userId, otpCode);
 
+      if (response.success && response.requiresProfileCompletion) {
+        const userId = localStorage.getItem("loginUserId");
+        const email = localStorage.getItem("loginEmail");
+
+        if (userId) {
+          localStorage.setItem("signupUserId", userId);
+        }
+        if (email) {
+          localStorage.setItem("signupEmail", email);
+        }
+        localStorage.setItem("signupVerificationComplete", "true");
+
+        localStorage.removeItem("loginUserId");
+        localStorage.removeItem("loginEmail");
+        localStorage.removeItem("loginDevCode");
+
+        setSuccessMessage("Profile incomplete. Redirecting to finish setup...");
+        setTimeout(() => {
+          router.replace("/signup/complete-profile");
+        }, 1200);
+        return;
+      }
+
       if (response.success) {
         localStorage.setItem("token", response.token);
         localStorage.setItem("user", JSON.stringify(response.user));

@@ -303,10 +303,35 @@ export const loginStep2 = async (req, res) => {
       });
     }
 
+    // Determine if the user has completed their onboarding profile
+    const isProfileComplete =
+      Boolean(user.fullName && user.school) &&
+      (user.role !== "student" || Boolean(user.major && user.classification));
+
     // Clear login code
     user.loginCode = null;
     user.loginCodeExpires = null;
     await user.save();
+
+    // If the profile is incomplete, prompt the user to finish onboarding instead of issuing a JWT
+    if (!isProfileComplete) {
+      return res.status(200).json({
+        success: true,
+        requiresProfileCompletion: true,
+        message: "Please complete your profile to finish logging in.",
+        user: {
+          id: user._id,
+          email: user.email,
+          fullName: user.fullName,
+          school: user.school,
+          ...(user.role === "student" && {
+            major: user.major,
+            classification: user.classification,
+          }),
+          role: user.role,
+        },
+      });
+    }
 
     // Generate JWT token
     const token = generateToken(user._id);
