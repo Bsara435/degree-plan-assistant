@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "peer_mentor", "fye_teacher", "admin"],
       default: "student",
     },
+    adminId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
+    },
     fullName: { type: String },
     school: { 
       type: String, 
@@ -35,6 +41,16 @@ const userSchema = new mongoose.Schema(
       enum: ["Freshman", "Sophomore", "Junior", "Senior"],
       default: null 
     }, // only for students
+    mentor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    advisor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );

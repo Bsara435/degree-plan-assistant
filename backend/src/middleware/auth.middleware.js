@@ -24,3 +24,12 @@ export const protect = async (req, res, next) => {
 
   res.status(401).json({ message: "Not authorized, no token provided." });
 };
+
+export const authorizeRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden: insufficient permissions." });
+    }
+    next();
+  };
+};

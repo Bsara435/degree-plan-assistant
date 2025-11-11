@@ -191,14 +191,26 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Forgot Password Link */}
-        <div className="text-center mb-6">
-          <Link
-            href="/forgot-password"
-            className="text-white hover:text-gray-300 transition-colors duration-200 text-sm"
-          >
-            Forgot Password?
-          </Link>
+        <div className="text-center space-y-3 mb-6">
+          {/* Forgot Password Link */}
+          <div>
+            <Link
+              href="/forgot-password"
+              className="text-white hover:text-gray-300 transition-colors duration-200 text-sm"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+          {/* Admin Login Shortcut */}
+          <div>
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-gray-300 transition-colors duration-200"
+            >
+              <span className="inline-flex h-2 w-2 rounded-full bg-[#6B46C1]" />
+              Admin? Sign in here
+            </Link>
+          </div>
         </div>
 
         {/* Back Button */}

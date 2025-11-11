@@ -165,6 +165,8 @@ export const completeProfileStep3 = async (req, res) => {
           classification: user.classification,
         }),
         role: user.role,
+        mentor: user.mentor,
+        advisor: user.advisor,
       },
       token, // <--- include JWT here
     });
@@ -351,6 +353,8 @@ export const loginStep2 = async (req, res) => {
           classification: user.classification,
         }),
         role: user.role,
+        mentor: user.mentor,
+        advisor: user.advisor,
       },
       token,
     });

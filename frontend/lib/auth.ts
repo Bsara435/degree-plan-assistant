@@ -2,6 +2,7 @@ export const roleDestinations: Record<string, string> = {
   student: "/home",
   mentor: "/home",
   "fye-teacher": "/home",
+  admin: "/admin/dashboard",
 };
 
 export const getRoleDestination = (role?: string): string => {

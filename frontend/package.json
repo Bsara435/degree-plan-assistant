@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.3",
+    "@phosphor-icons/react": "^2.1.7",
     "axios": "^1.12.2",
     "next": "15.5.5",
     "next-auth": "^4.24.11",

@@ -60,7 +60,7 @@ export default function HomePage() {
 
       <section className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-8 px-6 pb-10 pt-6">
         <Link
-          href="/chat"
+          href="/chat/assistant"
           className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-lg shadow-[rgba(18,8,75,0.08)] transition hover:-translate-y-1 hover:shadow-xl"
         >
           <div className="flex items-center justify-between">
