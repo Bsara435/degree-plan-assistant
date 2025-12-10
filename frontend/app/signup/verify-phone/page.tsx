@@ -13,11 +13,17 @@ export default function VerifyPhone() {
 
   // Get email from localStorage (set during signup)
   const [emailAddress, setEmailAddress] = useState("user@example.com");
+  const [devCode, setDevCode] = useState<string | null>(null);
   
   useEffect(() => {
     const storedEmail = localStorage.getItem('signupEmail');
+    const storedCode = localStorage.getItem('signupDevCode');
     if (storedEmail) {
       setEmailAddress(storedEmail);
+    }
+    if (storedCode) {
+      setDevCode(storedCode);
+      console.log('🔐 DEBUG: Verification code retrieved from localStorage:', storedCode);
     }
   }, []);
 
@@ -176,6 +182,21 @@ export default function VerifyPhone() {
             {emailAddress}
           </span>
         </div>
+
+        {/* Debug: Display Verification Code */}
+        {devCode && (
+          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4 mb-6">
+            <p className="text-yellow-800 text-sm font-semibold mb-2 text-center">
+              🐛 DEBUG MODE: Verification Code
+            </p>
+            <p className="text-2xl font-bold text-center text-yellow-900 tracking-wider">
+              {devCode}
+            </p>
+            <p className="text-yellow-700 text-xs text-center mt-2">
+              (This is displayed because email sending is not configured)
+            </p>
+          </div>
+        )}
 
         {/* OTP Input Fields */}
         <form onSubmit={handleSubmit} className="mb-8">

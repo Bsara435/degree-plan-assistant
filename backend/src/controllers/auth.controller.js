@@ -30,12 +30,13 @@ export const signUpStep1 = async (req, res) => {
     // Generate confirmation code (6-digit)
     const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Create new unconfirmed user
+    // Create new unconfirmed user (don't set adminId for regular users)
     const newUser = await User.create({
       email,
       password: hashedPassword,
       confirmationCode,
       isConfirmed: false,
+      // adminId is not set - only admins have this field
     });
 
     // Send confirmation email (skip if credentials not configured)
@@ -60,9 +61,22 @@ export const signUpStep1 = async (req, res) => {
     });
   } catch (error) {
     console.error("Signup error:", error.message);
+    
+    // Handle duplicate key error for adminId
+    if (error.code === 11000 && error.keyPattern?.adminId) {
+      return res.status(500).json({
+        success: false,
+        message: "Database configuration error. Please contact administrator.",
+        error: process.env.NODE_ENV === "development" 
+          ? "adminId index issue. Run fixAdminIdIndex.js script." 
+          : undefined,
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: "Server error during signup. Please try again later.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -172,7 +186,22 @@ export const completeProfileStep3 = async (req, res) => {
     });
   } catch (error) {
     console.error("Profile completion error:", error.message);
-    res.status(500).json({ message: "Server error during profile completion." });
+    
+    // Handle duplicate key error for adminId (shouldn't happen in profile completion, but just in case)
+    if (error.code === 11000 && error.keyPattern?.adminId) {
+      return res.status(500).json({
+        success: false,
+        message: "Database configuration error. Please contact administrator.",
+        error: process.env.NODE_ENV === "development" 
+          ? "adminId index issue. Run fixAdminIdIndex.js script." 
+          : undefined,
+      });
+    }
+    
+    res.status(500).json({ 
+      message: "Server error during profile completion.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
@@ -247,9 +276,22 @@ export const loginStep1 = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Login error:", error.message);
+    
+    // Handle duplicate key error for adminId (shouldn't happen in login, but just in case)
+    if (error.code === 11000 && error.keyPattern?.adminId) {
+      return res.status(500).json({
+        success: false,
+        message: "Database configuration error. Please contact administrator.",
+        error: process.env.NODE_ENV === "development" 
+          ? "adminId index issue. Run fixAdminIdIndex.js script." 
+          : undefined,
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: "Server error during login. Please try again later.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -360,9 +402,22 @@ export const loginStep2 = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Login verification error:", error.message);
+    
+    // Handle duplicate key error for adminId (shouldn't happen in verification, but just in case)
+    if (error.code === 11000 && error.keyPattern?.adminId) {
+      return res.status(500).json({
+        success: false,
+        message: "Database configuration error. Please contact administrator.",
+        error: process.env.NODE_ENV === "development" 
+          ? "adminId index issue. Run fixAdminIdIndex.js script." 
+          : undefined,
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: "Server error during login verification. Please try again later.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

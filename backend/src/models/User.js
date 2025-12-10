@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
-      default: null,
+      // No default - only set for admin users
     },
     fullName: { type: String },
     school: { 

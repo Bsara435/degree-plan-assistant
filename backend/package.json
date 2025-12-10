@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon src/server.js",
     "dev": "nodemon src/server.js",
-    "seed:admin": "node scripts/createAdmin.js"
+    "seed:admin": "node scripts/createAdmin.js",
+    "fix:adminId": "node scripts/fixAdminIdIndex.js",
+    "check:resend": "node scripts/checkResend.js"
   },
   "keywords": [],
   "author": "",

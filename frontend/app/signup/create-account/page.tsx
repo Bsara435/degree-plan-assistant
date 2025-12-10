@@ -117,6 +117,12 @@ export default function CreateAccount() {
         // Store email for display in verification page
         localStorage.setItem('signupEmail', formData.email);
         
+        // Store confirmation code if provided (for debugging - development mode)
+        if (response.confirmationCode) {
+          localStorage.setItem('signupDevCode', response.confirmationCode);
+          console.log('🔐 DEBUG: Verification code stored:', response.confirmationCode);
+        }
+        
         // Redirect to email verification page
         window.location.href = "/signup/verify-phone";
       } else {

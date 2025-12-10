@@ -12,3 +12,6 @@ The current email delivery flow encounters failures under certain configurations
 - Verify the domain in Resend and configure `RESEND_FROM_EMAIL`.
 - Alternatively, configure SMTP credentials via `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM_EMAIL` to bypass the Resend sandbox restriction.
 
+### Resend Configuration
+For detailed Resend setup instructions, see **[RESEND-EMAIL-SERVICE.md](../RESEND-EMAIL-SERVICE.md)**
+
