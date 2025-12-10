@@ -47,3 +47,25 @@ degree-plan-assistant/
 ├── n8n/ → Automation workflows
 ├── scripts/ → Data loaders (catalog, seeding)
 └── docs/ → Documentation and progress reports
+
+## 📚 Documentation Index
+
+### Core Documentation
+- **[README.md](./README.md)** - Project overview and architecture
+- **[ROLES-ANALYSIS.md](./ROLES-ANALYSIS.md)** - User roles implementation and finalization guide
+- **[ADMIN-ANALYTICS-DASHBOARD.md](./ADMIN-ANALYTICS-DASHBOARD.md)** - Admin analytics dashboard documentation
+
+### Backend Documentation
+- **[backend progress/AUTH-SUMMARY.md](./backend%20progress/AUTH-SUMMARY.md)** - Complete authentication system
+- **[backend progress/authentication-progress.md](./backend%20progress/authentication-progress.md)** - Signup flow details
+- **[backend progress/login-progress.md](./backend%20progress/login-progress.md)** - Login flow details
+
+### Frontend Documentation
+- **[UI&Frontend/SETUP-GUIDE.md](./UI&Frontend/SETUP-GUIDE.md)** - Frontend setup and configuration
+- **[UI&Frontend/UI-progress.md](./UI&Frontend/UI-progress.md)** - UI/UX design progress
+- **[UI&Frontend/home-experience.md](./UI&Frontend/home-experience.md)** - Authenticated home experience
+- **[frontend progress/README.md](./frontend%20progress/README.md)** - Frontend implementation status
+
+### Setup & Testing
+- **[setup/README.md](./setup/README.md)** - Dependencies and environment setup
+- **[test-and-bugs/README.md](./test-and-bugs/README.md)** - Known issues and testing notes

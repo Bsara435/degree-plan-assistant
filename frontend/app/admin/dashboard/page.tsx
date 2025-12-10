@@ -7,10 +7,14 @@ import {
   GraduationCap,
   UsersThree,
   IdentificationBadge,
-  ArrowClockwise,
   ArrowSquareOut,
+  ShieldCheck,
+  MagnifyingGlass,
+  X,
 } from "@phosphor-icons/react";
 import { adminAPI } from "../../../lib/api";
+import { AdminHeader } from "../../../components/layout/AdminHeader";
+import { AdminBottomNav } from "../../../components/layout/AdminBottomNav";
 
 type UserSummary = {
   _id: string;
@@ -36,11 +40,13 @@ export default function AdminDashboardPage() {
   const [advisors, setAdvisors] = useState<UserSummary[]>([]);
   const [selectedMentors, setSelectedMentors] = useState<SelectMap>({});
   const [selectedAdvisors, setSelectedAdvisors] = useState<SelectMap>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -69,19 +75,13 @@ export default function AdminDashboardPage() {
     setErrorMessage("");
   };
 
-  const fetchData = useCallback(async () => {
-    resetMessages();
-    setIsLoading(true);
+  const fetchMentorsAndAdvisors = useCallback(async () => {
     try {
-      const [studentsResponse, mentorsResponse, advisorsResponse] = await Promise.all([
-        adminAPI.listStudents(),
+      const [mentorsResponse, advisorsResponse] = await Promise.all([
         adminAPI.listMentors(),
         adminAPI.listAdvisors(),
       ]);
 
-      if (studentsResponse?.success) {
-        setStudents(studentsResponse.students ?? []);
-      }
       if (mentorsResponse?.success) {
         setMentors(mentorsResponse.mentors ?? []);
       }
@@ -89,9 +89,32 @@ export default function AdminDashboardPage() {
         setAdvisors(advisorsResponse.advisors ?? []);
       }
     } catch (error: any) {
-      console.error("Failed to load admin data:", error);
-      const message = error?.response?.data?.message || "Unable to load dashboard data.";
+      console.error("Failed to load mentors/advisors:", error);
+    }
+  }, []);
+
+  const searchStudents = useCallback(async (query: string) => {
+    if (!query || query.trim() === "") {
+      setStudents([]);
+      setIsSearching(false);
+      return;
+    }
+
+    resetMessages();
+    setIsLoading(true);
+    setIsSearching(true);
+    try {
+      const response = await adminAPI.searchStudents(query.trim());
+      if (response?.success) {
+        setStudents(response.students ?? []);
+      } else {
+        throw new Error(response?.message || "Search failed");
+      }
+    } catch (error: any) {
+      console.error("Failed to search students:", error);
+      const message = error?.response?.data?.message || "Unable to search students.";
       setErrorMessage(message);
+      setStudents([]);
     } finally {
       setIsLoading(false);
     }
@@ -99,9 +122,9 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (isAuthorized) {
-      fetchData();
+      fetchMentorsAndAdvisors();
     }
-  }, [isAuthorized, fetchData]);
+  }, [isAuthorized, fetchMentorsAndAdvisors]);
 
   const handlePromoteToMentor = async (studentId: string) => {
     resetMessages();
@@ -110,7 +133,10 @@ export default function AdminDashboardPage() {
       const response = await adminAPI.promoteStudentToMentor(studentId);
       if (response?.success) {
         setStatusMessage("Student promoted to mentor successfully.");
-        fetchData();
+        if (searchQuery) {
+          searchStudents(searchQuery);
+        }
+        fetchMentorsAndAdvisors();
       } else {
         throw new Error(response?.message || "Unable to promote student.");
       }
@@ -137,7 +163,9 @@ export default function AdminDashboardPage() {
       const response = await adminAPI.assignMentor(studentId, mentorId);
       if (response?.success) {
         setStatusMessage("Mentor assigned successfully.");
-        fetchData();
+        if (searchQuery) {
+          searchStudents(searchQuery);
+        }
       } else {
         throw new Error(response?.message || "Unable to assign mentor.");
       }
@@ -164,7 +192,9 @@ export default function AdminDashboardPage() {
       const response = await adminAPI.assignAdvisor(studentId, advisorId);
       if (response?.success) {
         setStatusMessage("Advisor assigned successfully.");
-        fetchData();
+        if (searchQuery) {
+          searchStudents(searchQuery);
+        }
       } else {
         throw new Error(response?.message || "Unable to assign advisor.");
       }
@@ -204,8 +234,10 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6FF] pb-20">
-      <header className="bg-gradient-to-br from-[var(--dark-navy)] via-[#14225D] to-[#001737] text-white">
+    <div className="flex min-h-screen flex-col bg-[#F4F6FF] text-[var(--dark-navy)]">
+      <AdminHeader />
+      
+      <div className="bg-gradient-to-br from-[var(--dark-navy)] via-[#14225D] to-[#001737] text-white">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="mb-3 flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-white/70">
@@ -226,12 +258,12 @@ export default function AdminDashboardPage() {
             <ArrowSquareOut size={16} weight="bold" />
           </Link>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto w-full max-w-6xl px-6">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 pb-20">
         <section className="-mt-12 grid gap-6 md:grid-cols-3">
           <DashboardMetric
-            title="Active Students"
+            title={isSearching ? "Search Results" : "Active Students"}
             icon={<GraduationCap size={28} weight="duotone" />}
             value={students.length}
             accent="from-[#4A67FF] to-[#2F41AA]"
@@ -251,23 +283,74 @@ export default function AdminDashboardPage() {
         </section>
 
         <section className="mt-10 rounded-3xl border border-white/70 bg-white p-8 shadow-xl">
-          <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-[var(--dark-navy)]">
-                Student Mentoring Overview
-              </h2>
-              <p className="text-sm text-gray-500">
-                Promote students to mentors or connect them with advisors in seconds.
-              </p>
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-[var(--dark-navy)] mb-2">
+              Student Mentoring Overview
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Search for students by name, email, major, school, or classification to manage their mentoring assignments.
+            </p>
+            
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <MagnifyingGlass size={20} className="text-gray-400" weight="duotone" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.trim() === "") {
+                    setStudents([]);
+                    setIsSearching(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    searchStudents(searchQuery);
+                  }
+                }}
+                placeholder="Search by name, email, major, school, or classification..."
+                className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-[var(--dark-navy)]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setStudents([]);
+                    setIsSearching(false);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} weight="bold" />
+                </button>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={fetchData}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--primary-blue)] px-4 py-2 text-sm font-medium text-[var(--primary-blue)] transition hover:bg-[var(--primary-blue)] hover:text-white"
-            >
-              <ArrowClockwise size={16} weight="bold" />
-              Refresh data
-            </button>
+            
+            {/* Search Button */}
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => searchStudents(searchQuery)}
+                disabled={!searchQuery.trim() || isLoading}
+                className={`inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium transition ${
+                  !searchQuery.trim() || isLoading
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[var(--primary-blue)] text-white hover:bg-[var(--primary-blue-light)]"
+                }`}
+              >
+                <MagnifyingGlass size={16} weight="bold" />
+                {isLoading ? "Searching..." : "Search Students"}
+              </button>
+              {isSearching && (
+                <div className="flex items-center text-sm text-gray-500">
+                  Found {students.length} result{students.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
           </div>
 
           {statusMessage && (
@@ -284,11 +367,24 @@ export default function AdminDashboardPage() {
 
           {isLoading ? (
             <div className="flex min-h-[200px] items-center justify-center text-[var(--primary-blue)]">
-              Loading student data...
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-blue)] mb-4"></div>
+                <p>Searching students...</p>
+              </div>
+            </div>
+          ) : !isSearching ? (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
+              <MagnifyingGlass size={48} weight="duotone" className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-2">Search for Students</p>
+              <p>Enter a search query above to find and manage students.</p>
+              <p className="text-sm mt-2">You can search by name, email, major, school, or classification.</p>
             </div>
           ) : students.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
-              No students available yet. Students will appear here once they complete onboarding.
+              <MagnifyingGlass size={48} weight="duotone" className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-2">No students found</p>
+              <p>No students match your search query: <strong>"{searchQuery}"</strong></p>
+              <p className="text-sm mt-2">Try a different search term or check your spelling.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -437,6 +533,8 @@ export default function AdminDashboardPage() {
           )}
         </section>
       </main>
+      
+      <AdminBottomNav />
     </div>
   );
 }
@@ -468,6 +566,8 @@ const ShieldBadge = () => (
     <IdentificationBadge size={22} weight="duotone" />
   </span>
 );
+
+
 
 
 

@@ -98,8 +98,14 @@ export default function AdminLoginPage() {
       }
     } catch (error: any) {
       console.error("Admin login error:", error);
-      const message =
+      let message =
         error?.response?.data?.message || error?.message || "Unable to log in. Please try again.";
+      
+      // If the error suggests creating an admin, add a helpful link
+      if (message.includes("No admin user found") || message.includes("create an admin")) {
+        message += " You can create one at /admin/create";
+      }
+      
       setGeneralError(message);
     } finally {
       setIsSubmitting(false);
@@ -205,11 +211,17 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-6 space-y-2 text-center text-sm text-gray-500">
             <p>
               Not an admin?{" "}
               <Link href="/login" className="font-medium text-[var(--primary-blue)] hover:underline">
                 Return to student login
+              </Link>
+            </p>
+            <p>
+              Need to create an admin user?{" "}
+              <Link href="/admin/create" className="font-medium text-[var(--primary-blue)] hover:underline">
+                Create Admin Account
               </Link>
             </p>
           </div>
