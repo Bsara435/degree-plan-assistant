@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { advisorAPI } from "../../../lib/api";
+import { Envelope } from "@phosphor-icons/react";
 
 type StoredUser = {
   fullName?: string;
@@ -24,6 +25,44 @@ type Student = {
     email: string;
   };
 };
+
+type RecentMessage = {
+  id: string;
+  studentName: string;
+  studentEmail: string;
+  subject: string;
+  preview: string;
+  timestamp: string;
+  unread?: boolean;
+};
+
+// Static recent messages data
+const staticRecentMessages: RecentMessage[] = [
+  {
+    id: "1",
+    studentName: "Ahmed Benali",
+    studentEmail: "a.benali@aui.ma",
+    subject: "Degree Plan Review",
+    preview: "I've reviewed your degree plan and made some recommendations for your next semester...",
+    timestamp: "2h ago",
+  },
+  {
+    id: "2",
+    studentName: "Fatima Alami",
+    studentEmail: "f.alami@aui.ma",
+    subject: "Course Selection Advice",
+    preview: "Based on your major requirements, I suggest taking CS 301 and MATH 205 next semester...",
+    timestamp: "Yesterday",
+  },
+  {
+    id: "3",
+    studentName: "Youssef Idrissi",
+    studentEmail: "y.idrissi@aui.ma",
+    subject: "Academic Progress Check",
+    preview: "Great progress this semester! Your GPA has improved significantly. Let's discuss...",
+    timestamp: "2 days ago",
+  },
+];
 
 const quickResources = [
   { title: "Academic Flowcharts", href: "/resources#flowcharts" },
@@ -88,7 +127,7 @@ export default function HomePage() {
   const greeting = useMemo(() => `Welcome ${userName}!`, [userName]);
   const isAdvisor = isAdvisorRole(user?.role);
 
-  // Advisor view with assigned students
+  // Advisor view with assigned students and recent messages
   if (isAdvisor) {
     return (
       <div className="flex min-h-full flex-col bg-[#F4F6FF] pb-20">
@@ -105,9 +144,27 @@ export default function HomePage() {
         </section>
 
         <section className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-8 px-6 pb-10 pt-6">
+          {/* Assigned Students Section */}
           <div className="rounded-3xl bg-white p-6 shadow-lg shadow-[rgba(18,8,75,0.08)]">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[var(--dark-navy)]">Assigned Students</h2>
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-[var(--primary-blue)]/10 p-2">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 text-[var(--primary-blue)]"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.6}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.003.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.58A13.978 13.978 0 0 1 4.172 9H7m4 0a5 5 0 0 1 5-5v2a5 5 0 0 1-5 5m-4 0h4m0 0v4m0-4h4m-4 0H3"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-[var(--dark-navy)]">Assigned Students</h2>
+              </div>
               <span className="rounded-full bg-[var(--primary-blue)]/10 px-3 py-1 text-sm font-semibold text-[var(--primary-blue)]">
                 {assignedStudents.length}
               </span>
@@ -173,6 +230,72 @@ export default function HomePage() {
             )}
           </div>
 
+          {/* Recent Messages Section */}
+          <div className="rounded-3xl bg-white p-6 shadow-lg shadow-[rgba(18,8,75,0.08)]">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-emerald-100 p-2">
+                  <Envelope size={20} weight="duotone" className="text-emerald-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-[var(--dark-navy)]">Recent Messages</h2>
+              </div>
+              <Link
+                href="/chat"
+                className="text-sm font-medium text-[var(--primary-blue)] hover:text-[var(--primary-blue-light)]"
+              >
+                View all
+              </Link>
+            </div>
+
+            {staticRecentMessages.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-gray-500">No recent messages.</p>
+                <p className="mt-2 text-sm text-gray-400">
+                  Messages you send to students will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {staticRecentMessages.map((message) => (
+                  <Link
+                    key={message.id}
+                    href={`/chat?student=${message.id}`}
+                    className="block rounded-2xl border border-gray-200 bg-gray-50/50 p-4 transition hover:border-emerald-300 hover:bg-gray-50 hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-[var(--dark-navy)] truncate">
+                            {message.studentName}
+                          </h3>
+                          {message.unread && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{message.studentEmail}</p>
+                        <p className="mt-2 text-sm font-medium text-emerald-600">{message.subject}</p>
+                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{message.preview}</p>
+                      </div>
+                      <div className="ml-3 flex flex-col items-end gap-1">
+                        <span className="text-xs text-gray-400 whitespace-nowrap">{message.timestamp}</span>
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.6}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Resources Section */}
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-[var(--dark-navy)]">Resources</h3>
