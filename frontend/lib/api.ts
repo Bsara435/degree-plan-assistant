@@ -91,6 +91,16 @@ export const authAPI = {
 };
 
 export const adminAPI = {
+  // Create admin user (for initial setup)
+  createAdmin: async (adminData?: {
+    email?: string;
+    fullName?: string;
+    school?: string;
+  }) => {
+    const response = await api.post("/admin/create", adminData || {});
+    return response.data;
+  },
+
   loginStep1: async (adminId: string, password: string) => {
     const response = await api.post("/admin/login/step1", {
       adminId,
@@ -109,6 +119,13 @@ export const adminAPI = {
 
   listStudents: async () => {
     const response = await api.get("/admin/students");
+    return response.data;
+  },
+
+  searchStudents: async (query: string) => {
+    const response = await api.get("/admin/students/search", {
+      params: { query },
+    });
     return response.data;
   },
 

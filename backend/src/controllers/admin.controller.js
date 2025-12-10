@@ -20,13 +20,27 @@ export const adminLoginStep1 = async (req, res) => {
     const adminUser = await User.findOne({ adminId, role: "admin" }).select("+password");
 
     if (!adminUser) {
-      return res.status(401).json({ message: "Invalid admin ID or password." });
+      // Check if any admin exists for better error message
+      const anyAdmin = await User.findOne({ role: "admin" });
+      if (!anyAdmin) {
+        return res.status(401).json({ 
+          message: "No admin user found. Please create an admin user first using POST /api/admin/create",
+          hint: "Admin user does not exist. Create one first."
+        });
+      }
+      return res.status(401).json({ 
+        message: "Invalid admin ID or password.",
+        hint: process.env.NODE_ENV === "development" ? `No admin found with adminId: "${adminId}"` : undefined
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, adminUser.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid admin ID or password." });
+      return res.status(401).json({ 
+        message: "Invalid admin ID or password.",
+        hint: process.env.NODE_ENV === "development" ? "Password does not match" : undefined
+      });
     }
 
     const loginCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -291,6 +305,48 @@ export const listStudents = async (req, res) => {
   }
 };
 
+export const searchStudents = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide a search query." 
+      });
+    }
+
+    const searchTerm = query.trim();
+    
+    // Search by name, email, major, or school
+    const students = await User.find({
+      role: "student",
+      $or: [
+        { fullName: { $regex: searchTerm, $options: "i" } },
+        { email: { $regex: searchTerm, $options: "i" } },
+        { major: { $regex: searchTerm, $options: "i" } },
+        { school: { $regex: searchTerm, $options: "i" } },
+        { classification: { $regex: searchTerm, $options: "i" } },
+      ],
+    })
+      .select(baseStudentSelect)
+      .populate("mentor", "fullName email role")
+      .populate("advisor", "fullName email role")
+      .sort({ fullName: 1 })
+      .limit(50); // Limit results to 50
+
+    res.status(200).json({ 
+      success: true, 
+      students,
+      count: students.length,
+      query: searchTerm
+    });
+  } catch (error) {
+    console.error("Search students error:", error.message);
+    res.status(500).json({ message: "Server error while searching students." });
+  }
+};
+
 export const listMentors = async (req, res) => {
   try {
     const mentors = await User.find({ role: "peer_mentor" })
@@ -314,6 +370,75 @@ export const listAdvisors = async (req, res) => {
   } catch (error) {
     console.error("List advisors error:", error.message);
     res.status(500).json({ message: "Server error while fetching advisors." });
+  }
+};
+
+export const createAdmin = async (req, res) => {
+  try {
+    const { email, fullName, school } = req.body;
+    const adminId = "admin";
+    const password = "Test1234";
+
+    // Check if admin with this adminId already exists
+    const existingAdmin = await User.findOne({ adminId });
+    if (existingAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: "Admin user with adminId 'admin' already exists.",
+      });
+    }
+
+    // Check if email is already registered
+    if (email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already registered.",
+        });
+      }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create admin user
+    const adminUser = await User.create({
+      email: email || `admin@degreeplan.local`,
+      password: hashedPassword,
+      adminId: adminId,
+      role: "admin",
+      fullName: fullName || "Admin User",
+      school: school || "SSE",
+      isConfirmed: true, // Admin can login immediately
+    });
+
+    console.log(`✅ Admin user created successfully with adminId: ${adminId}`);
+
+    return res.status(201).json({
+      success: true,
+      message: "Admin user created successfully.",
+      user: {
+        id: adminUser._id,
+        adminId: adminUser.adminId,
+        email: adminUser.email,
+        fullName: adminUser.fullName,
+        role: adminUser.role,
+        school: adminUser.school,
+      },
+      credentials: {
+        adminId: adminId,
+        password: password,
+        note: "Save these credentials securely. Password will not be shown again.",
+      },
+    });
+  } catch (error) {
+    console.error("Create admin error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while creating admin user.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
