@@ -20,13 +20,21 @@ export const analyzeTranscript = async (req, res) => {
     const data = await pdf(req.file.buffer);
     const transcriptText = data.text;
     
+
+    
     // Check if text extraction worked
     if (!transcriptText || transcriptText.length < 10) {
         console.warn("⚠️ Warning: Extracted text is very short or empty.");
     } else {
         console.log(`✅ Success! Extracted ${transcriptText.length} characters.`);
     }
-
+    // console.log("Extracted Text Preview:", transcriptText); 
+    const cleanedTranscript = transcriptText
+      .replace(/Page : \d+ of \d+/g, "") // Remove page numbers
+      .replace(/Term Totals :[\s\S]*?Career Totals :[\s\S]*?\d+\.\d+/g, "") // Remove totals rows
+      .replace(/\n\s*\n/g, "\n"); // Remove empty lines
+    
+    console.log(`Original Length: ${transcriptText.length} -> Cleaned Length: ${cleanedTranscript.length}`);
     // C. Prepare Data for Voiceflow
     const userPlan = req.body.userPlan || "Check my plan.";
     const userID = req.body.userID || "default_user";
@@ -35,9 +43,8 @@ export const analyzeTranscript = async (req, res) => {
     const vfResponse = await axios.post(
       `https://general-runtime.voiceflow.com/state/user/${userID}/interact`,
       {
-        action: { type: 'text', payload: userPlan },
+        action: { type: 'text', payload: userPlan + cleanedTranscript },
         config: { tts: false },
-        variables: { user_transcript: transcriptText }
       },
       {
         headers: {
