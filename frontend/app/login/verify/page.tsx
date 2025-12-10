@@ -183,16 +183,6 @@ export default function LoginVerify() {
           </div>
         )}
 
-        {devLoginCode && (
-          <div className="mb-6 rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-700">
-            <p className="font-semibold text-yellow-900">Development Mode</p>
-            <p>
-              Your verification code is{" "}
-              <span className="font-mono text-base text-yellow-900">{devLoginCode}</span>
-            </p>
-          </div>
-        )}
-
         {errorMessage && (
           <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-700">
             {errorMessage}
