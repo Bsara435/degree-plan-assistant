@@ -142,4 +142,35 @@ export const adminAPI = {
   },
 };
 
+// --- NEW: ADVISING AGENT API ---
+
+export type ApiResponse = {
+  success: boolean;
+  analysis: string;
+}
+
+export const sendAdvisingRequest = async (
+  question: string,
+  transcriptFile: File // Now accepts a File object
+): Promise<ApiResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('question', question);
+    formData.append('transcript', transcriptFile); // Key must match backend (e.g., upload.single('transcript'))
+
+    const response = await api.post('/analyze-plan', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Explicitly set for file upload
+      },
+    });
+    return response.data.analysis;
+  } catch (error) {
+    console.error("Advising Request Failed:", error);
+    return {
+      success: false,
+      analysis: "**System Error:** Failed to upload transcript or connect to advisor."
+    };
+  }
+}
+
 export default api;
