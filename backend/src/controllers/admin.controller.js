@@ -267,8 +267,8 @@ export const assignAdvisorToStudent = async (req, res) => {
       return res.status(400).json({ message: "Advisors can only be assigned to students." });
     }
 
-    if (!["fye_teacher", "peer_mentor", "admin"].includes(advisor.role)) {
-      return res.status(400).json({ message: "Selected user cannot be assigned as an advisor." });
+    if (advisor.role !== "advisor") {
+      return res.status(400).json({ message: "Selected user is not an advisor." });
     }
 
     student.advisor = advisor._id;
@@ -353,7 +353,22 @@ export const listMentors = async (req, res) => {
       .select("fullName email role school major")
       .sort({ fullName: 1 });
 
-    res.status(200).json({ success: true, mentors });
+    // Get assignment counts for each mentor
+    const mentorsWithCounts = await Promise.all(
+      mentors.map(async (mentor) => {
+        const assignedCount = await User.countDocuments({ 
+          mentor: mentor._id, 
+          role: "student" 
+        });
+        return {
+          ...mentor.toObject(),
+          assignedStudentsCount: assignedCount,
+          status: assignedCount > 0 ? "assigned" : "available",
+        };
+      })
+    );
+
+    res.status(200).json({ success: true, mentors: mentorsWithCounts });
   } catch (error) {
     console.error("List mentors error:", error.message);
     res.status(500).json({ message: "Server error while fetching mentors." });
@@ -362,14 +377,136 @@ export const listMentors = async (req, res) => {
 
 export const listAdvisors = async (req, res) => {
   try {
-    const advisors = await User.find({ role: { $in: ["fye_teacher", "peer_mentor", "admin"] } })
+    const advisors = await User.find({ role: "advisor" })
       .select("fullName email role school")
       .sort({ fullName: 1 });
 
-    res.status(200).json({ success: true, advisors });
+    // Get assignment counts for each advisor
+    const advisorsWithCounts = await Promise.all(
+      advisors.map(async (advisor) => {
+        const assignedCount = await User.countDocuments({ 
+          advisor: advisor._id, 
+          role: "student" 
+        });
+        return {
+          ...advisor.toObject(),
+          assignedStudentsCount: assignedCount,
+          status: assignedCount > 0 ? "assigned" : "available",
+        };
+      })
+    );
+
+    res.status(200).json({ success: true, advisors: advisorsWithCounts });
   } catch (error) {
     console.error("List advisors error:", error.message);
     res.status(500).json({ message: "Server error while fetching advisors." });
+  }
+};
+
+export const getAssignedStudents = async (req, res) => {
+  try {
+    const advisorId = req.user._id;
+
+    // Verify the user is an advisor
+    if (req.user.role !== "advisor") {
+      return res.status(403).json({ 
+        success: false,
+        message: "Only advisors can access assigned students." 
+      });
+    }
+
+    const students = await User.find({ advisor: advisorId, role: "student" })
+      .select(baseStudentSelect)
+      .populate("mentor", "fullName email role")
+      .sort({ fullName: 1 });
+
+    res.status(200).json({ 
+      success: true, 
+      students,
+      count: students.length 
+    });
+  } catch (error) {
+    console.error("Get assigned students error:", error.message);
+    res.status(500).json({ message: "Server error while fetching assigned students." });
+  }
+};
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide a search query." 
+      });
+    }
+
+    const searchTerm = query.trim();
+    
+    // Search all users by name, email, or role
+    const users = await User.find({
+      $or: [
+        { fullName: { $regex: searchTerm, $options: "i" } },
+        { email: { $regex: searchTerm, $options: "i" } },
+        { role: { $regex: searchTerm, $options: "i" } },
+        { school: { $regex: searchTerm, $options: "i" } },
+      ],
+    })
+      .select("fullName email role school major classification")
+      .sort({ fullName: 1 })
+      .limit(50); // Limit results to 50
+
+    res.status(200).json({ 
+      success: true, 
+      users,
+      count: users.length,
+      query: searchTerm
+    });
+  } catch (error) {
+    console.error("Search users error:", error.message);
+    res.status(500).json({ message: "Server error while searching users." });
+  }
+};
+
+export const makeUserAdvisor = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId." });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Check if user is already an advisor
+    if (user.role === "advisor") {
+      return res.status(400).json({ 
+        message: "User is already an advisor." 
+      });
+    }
+
+    // Change user role to advisor
+    user.role = "advisor";
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User promoted to advisor successfully.",
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Make user advisor error:", error.message);
+    res.status(500).json({ message: "Server error while making user advisor." });
   }
 };
 

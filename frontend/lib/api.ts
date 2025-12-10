@@ -157,6 +157,25 @@ export const adminAPI = {
     });
     return response.data;
   },
+
+  searchUsers: async (query: string) => {
+    const response = await api.get("/admin/users/search", {
+      params: { query },
+    });
+    return response.data;
+  },
+
+  makeUserAdvisor: async (userId: string) => {
+    const response = await api.post(`/admin/users/${userId}/make-advisor`);
+    return response.data;
+  },
+};
+
+export const advisorAPI = {
+  getAssignedStudents: async () => {
+    const response = await api.get("/advisor/assigned-students");
+    return response.data;
+  },
 };
 
 // --- NEW: ADVISING AGENT API ---

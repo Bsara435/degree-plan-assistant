@@ -47,6 +47,10 @@ export default function AdminDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -201,6 +205,56 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       console.error("Assign advisor error:", error);
       const message = error?.response?.data?.message || error?.message || "Failed to assign advisor.";
+      setErrorMessage(message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const searchUsersForAdvisor = useCallback(async (query: string) => {
+    if (!query || query.trim() === "") {
+      setUsers([]);
+      setIsSearchingUsers(false);
+      return;
+    }
+
+    resetMessages();
+    setIsLoadingUsers(true);
+    setIsSearchingUsers(true);
+    try {
+      const response = await adminAPI.searchUsers(query.trim());
+      if (response?.success) {
+        setUsers(response.users ?? []);
+      } else {
+        throw new Error(response?.message || "Search failed");
+      }
+    } catch (error: any) {
+      console.error("Failed to search users:", error);
+      const message = error?.response?.data?.message || "Unable to search users.";
+      setErrorMessage(message);
+      setUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
+  const handleMakeUserAdvisor = async (userId: string) => {
+    resetMessages();
+    setActionLoading(`make-advisor-${userId}`);
+    try {
+      const response = await adminAPI.makeUserAdvisor(userId);
+      if (response?.success) {
+        setStatusMessage(`User promoted to advisor successfully.`);
+        if (userSearchQuery) {
+          searchUsersForAdvisor(userSearchQuery);
+        }
+        fetchMentorsAndAdvisors();
+      } else {
+        throw new Error(response?.message || "Unable to make user advisor.");
+      }
+    } catch (error: any) {
+      console.error("Make user advisor error:", error);
+      const message = error?.response?.data?.message || error?.message || "Failed to make user advisor.";
       setErrorMessage(message);
     } finally {
       setActionLoading(null);
@@ -526,6 +580,178 @@ export default function AdminDashboardPage() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-10 rounded-3xl border border-white/70 bg-white p-8 shadow-xl">
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-[var(--dark-navy)] mb-2">
+              Make Users Advisors
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Search for any user by name, email, or role and promote them to advisor status. Advisors can be assigned to students.
+            </p>
+            
+            {/* User Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <MagnifyingGlass size={20} className="text-gray-400" weight="duotone" />
+              </div>
+              <input
+                type="text"
+                value={userSearchQuery}
+                onChange={(e) => {
+                  setUserSearchQuery(e.target.value);
+                  if (e.target.value.trim() === "") {
+                    setUsers([]);
+                    setIsSearchingUsers(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    searchUsersForAdvisor(userSearchQuery);
+                  }
+                }}
+                placeholder="Search users by name, email, or role..."
+                className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-[var(--dark-navy)]"
+              />
+              {userSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserSearchQuery("");
+                    setUsers([]);
+                    setIsSearchingUsers(false);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} weight="bold" />
+                </button>
+              )}
+            </div>
+            
+            {/* User Search Button */}
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => searchUsersForAdvisor(userSearchQuery)}
+                disabled={!userSearchQuery.trim() || isLoadingUsers}
+                className={`inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium transition ${
+                  !userSearchQuery.trim() || isLoadingUsers
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[var(--primary-blue)] text-white hover:bg-[var(--primary-blue-light)]"
+                }`}
+              >
+                <MagnifyingGlass size={16} weight="bold" />
+                {isLoadingUsers ? "Searching..." : "Search Users"}
+              </button>
+              {isSearchingUsers && (
+                <div className="flex items-center text-sm text-gray-500">
+                  Found {users.length} result{users.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isLoadingUsers ? (
+            <div className="flex min-h-[200px] items-center justify-center text-[var(--primary-blue)]">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-blue)] mb-4"></div>
+                <p>Searching users...</p>
+              </div>
+            </div>
+          ) : !isSearchingUsers ? (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
+              <MagnifyingGlass size={48} weight="duotone" className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-2">Search for Users</p>
+              <p>Enter a search query above to find users and make them advisors.</p>
+              <p className="text-sm mt-2">You can search by name, email, or role.</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
+              <MagnifyingGlass size={48} weight="duotone" className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-2">No users found</p>
+              <p>No users match your search query: <strong>"{userSearchQuery}"</strong></p>
+              <p className="text-sm mt-2">Try a different search term or check your spelling.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {users.map((user) => {
+                const userId = user._id;
+                const isAlreadyAdvisor = user.role === "advisor";
+                return (
+                  <div
+                    key={userId}
+                    className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-[var(--dark-navy)]">
+                          {user.fullName || "Unnamed User"}
+                        </h3>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                          <span className={`rounded-full px-3 py-1 ${
+                            user.role === "admin" ? "bg-purple-100 text-purple-700" :
+                            user.role === "peer_mentor" ? "bg-orange-100 text-orange-700" :
+                            user.role === "fye_teacher" ? "bg-green-100 text-green-700" :
+                            user.role === "advisor" ? "bg-teal-100 text-teal-700" :
+                            "bg-blue-100 text-blue-700"
+                          }`}>
+                            {user.role}
+                          </span>
+                          {user.school && (
+                            <span className="rounded-full bg-[var(--primary-blue)]/10 px-3 py-1 text-[var(--primary-blue)]">
+                              {user.school}
+                            </span>
+                          )}
+                          {user.major && (
+                            <span className="rounded-full bg-[var(--primary-blue)]/10 px-3 py-1 text-[var(--primary-blue)]">
+                              {user.major}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {isAlreadyAdvisor && (
+                          <div className="text-right text-sm">
+                            <p className="text-gray-500">Status</p>
+                            <p className="font-medium text-green-600">Already an Advisor</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {!isAlreadyAdvisor && (
+                      <div className="mt-6">
+                        <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                          <h4 className="text-sm font-semibold text-[var(--dark-navy)]">
+                            Make this user an advisor
+                          </h4>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Promotes this user to Advisor role, allowing them to be assigned as an advisor to students.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleMakeUserAdvisor(userId)}
+                            disabled={actionLoading === `make-advisor-${userId}`}
+                            className={`mt-4 w-full rounded-lg bg-gradient-to-r from-[#54C1A9] to-[#1D8B73] px-4 py-2 text-sm font-semibold text-white transition ${
+                              actionLoading === `make-advisor-${userId}`
+                                ? "cursor-not-allowed opacity-70"
+                                : "hover:opacity-90"
+                            }`}
+                          >
+                            {actionLoading === `make-advisor-${userId}` ? "Promoting..." : "Make Advisor"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
     loginCodeExpires: { type: Date, default: null },
     role: {
       type: String,
-      enum: ["student", "peer_mentor", "fye_teacher", "admin"],
+      enum: ["student", "peer_mentor", "fye_teacher", "advisor", "admin"],
       default: "student",
     },
     adminId: {

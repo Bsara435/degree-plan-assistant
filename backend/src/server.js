@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
 //routes imports
 import authRoutes from './routes/auth.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import advisorRoutes from './routes/advisor.routes.js';
 import degreePlanRoutes from './routes/degreePlan.routes.js';
 
 // ---------------------------
@@ -33,6 +34,7 @@ app.use(express.json());
 //auth routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/advisor", advisorRoutes);
 app.use("/api", degreePlanRoutes);
 
 

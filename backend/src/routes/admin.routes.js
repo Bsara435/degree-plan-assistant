@@ -9,7 +9,10 @@ import {
   searchStudents,
   listMentors,
   listAdvisors,
+  getAssignedStudents,
   createAdmin,
+  searchUsers,
+  makeUserAdvisor,
 } from "../controllers/admin.controller.js";
 import { protect, authorizeRoles } from "../middleware/auth.middleware.js";
 
@@ -69,6 +72,20 @@ router.post(
   protect,
   authorizeRoles("admin"),
   assignAdvisorToStudent
+);
+
+router.get(
+  "/users/search",
+  protect,
+  authorizeRoles("admin"),
+  searchUsers
+);
+
+router.post(
+  "/users/:userId/make-advisor",
+  protect,
+  authorizeRoles("admin"),
+  makeUserAdvisor
 );
 
 export default router;
