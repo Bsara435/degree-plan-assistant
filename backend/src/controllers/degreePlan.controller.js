@@ -14,21 +14,11 @@ export const analyzeTranscript = async (req, res) => {
       return res.status(400).json({ error: "No transcript file uploaded" });
     }
 
-    console.log("📄 Processing PDF with pdf-extraction...");
 
     // B. Extract Text (Same API as before)
     const data = await pdf(req.file.buffer);
     const transcriptText = data.text;
-    
 
-    
-    // Check if text extraction worked
-    if (!transcriptText || transcriptText.length < 10) {
-        console.warn("⚠️ Warning: Extracted text is very short or empty.");
-    } else {
-        console.log(`✅ Success! Extracted ${transcriptText.length} characters.`);
-    }
-    // console.log("Extracted Text Preview:", transcriptText); 
     const cleanedTranscript = transcriptText
       .replace(/Page : \d+ of \d+/g, "") // Remove page numbers
       .replace(/Term Totals :[\s\S]*?Career Totals :[\s\S]*?\d+\.\d+/g, "") // Remove totals rows
