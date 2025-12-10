@@ -431,6 +431,34 @@ export const getAssignedStudents = async (req, res) => {
   }
 };
 
+export const getMentorAssignedStudents = async (req, res) => {
+  try {
+    const mentorId = req.user._id;
+
+    // Verify the user is a mentor
+    if (req.user.role !== "peer_mentor") {
+      return res.status(403).json({ 
+        success: false,
+        message: "Only mentors can access assigned students." 
+      });
+    }
+
+    const students = await User.find({ mentor: mentorId, role: "student" })
+      .select(baseStudentSelect)
+      .populate("advisor", "fullName email role")
+      .sort({ fullName: 1 });
+
+    res.status(200).json({ 
+      success: true, 
+      students,
+      count: students.length 
+    });
+  } catch (error) {
+    console.error("Get mentor assigned students error:", error.message);
+    res.status(500).json({ message: "Server error while fetching assigned students." });
+  }
+};
+
 export const searchUsers = async (req, res) => {
   try {
     const { query } = req.query;

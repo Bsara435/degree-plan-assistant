@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authAPI } from "../../../lib/api";
+import { SCHOOLS, MAJORS_BY_SCHOOL } from "../../../lib/constants/majors";
 
 export default function CompleteProfile() {
   const router = useRouter();
@@ -21,25 +22,13 @@ export default function CompleteProfile() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // School options matching backend enum
-  const schools = [
-    { value: "SSE", label: "School of Science and Engineering (SSE)" },
-    { value: "SHAS", label: "School of Humanities and Social Sciences (SHAS)" },
-    { value: "SBA", label: "School of Business Administration (SBA)" }
-  ];
-
-  const majors = [
-    "Computer Science",
-    "Business Administration",
-    "Engineering",
-    "International Studies",
-    "Economics",
-    "Political Science",
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology"
-  ];
+  // Get majors filtered by selected school
+  const availableMajors = useMemo(() => {
+    if (!formData.school) {
+      return [];
+    }
+    return MAJORS_BY_SCHOOL[formData.school] || [];
+  }, [formData.school]);
 
   // Classification options matching backend enum
   const classifications = [
@@ -80,10 +69,19 @@ export default function CompleteProfile() {
 
   // Handle dropdown changes
   const handleDropdownChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Reset major when school changes
+      if (field === "school") {
+        newData.major = "";
+      }
+      
+      return newData;
+    });
 
     // Clear error when user selects
     if (errors[field as keyof typeof errors]) {
@@ -271,7 +269,7 @@ export default function CompleteProfile() {
               required
             >
               <option value="">School</option>
-              {schools.map((school, index) => (
+              {SCHOOLS.map((school, index) => (
                 <option key={index} value={school.value}>
                   {school.label}
                 </option>
@@ -324,13 +322,16 @@ export default function CompleteProfile() {
               name="major"
               value={formData.major}
               onChange={(e) => handleDropdownChange('major', e.target.value)}
+              disabled={!formData.school}
               className={`w-full pl-12 pr-10 py-4 bg-white border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-gray-900 appearance-none ${
                 errors.major ? 'border-red-500' : 'border-gray-200'
-              }`}
+              } ${!formData.school ? 'opacity-50 cursor-not-allowed' : ''}`}
               required
             >
-              <option value="">Major</option>
-              {majors.map((major, index) => (
+              <option value="">
+                {formData.school ? "Major" : "Select a school first"}
+              </option>
+              {availableMajors.map((major, index) => (
                 <option key={index} value={major}>
                   {major}
                 </option>

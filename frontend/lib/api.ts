@@ -178,6 +178,13 @@ export const advisorAPI = {
   },
 };
 
+export const mentorAPI = {
+  getAssignedStudents: async () => {
+    const response = await api.get("/mentor/assigned-students");
+    return response.data;
+  },
+};
+
 // --- NEW: ADVISING AGENT API ---
 
 export type ApiResponse = {

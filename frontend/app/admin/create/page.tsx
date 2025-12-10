@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShieldCheck, CheckCircle, XCircle } from "@phosphor-icons/react";
 import { adminAPI } from "../../../lib/api";
+import { SCHOOLS } from "../../../lib/constants/majors";
 
 type FormData = {
   email: string;
@@ -24,12 +25,6 @@ export default function CreateAdminPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [createdAdmin, setCreatedAdmin] = useState<any>(null);
-
-  const schools = [
-    { value: "SSE", label: "School of Science and Engineering (SSE)" },
-    { value: "SHAS", label: "School of Humanities and Social Sciences (SHAS)" },
-    { value: "SBA", label: "School of Business Administration (SBA)" },
-  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -228,7 +223,7 @@ export default function CreateAdminPage() {
               onChange={handleChange}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-[var(--dark-navy)] shadow-sm focus:border-[var(--primary-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]/20"
             >
-              {schools.map((school) => (
+              {SCHOOLS.map((school) => (
                 <option key={school.value} value={school.value}>
                   {school.label}
                 </option>

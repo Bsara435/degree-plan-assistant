@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { advisorAPI } from "../../../lib/api";
+import { advisorAPI, mentorAPI } from "../../../lib/api";
 import { Envelope } from "@phosphor-icons/react";
 
 type StoredUser = {
@@ -74,6 +74,10 @@ const isAdvisorRole = (role?: string): boolean => {
   return role === "advisor";
 };
 
+const isMentorRole = (role?: string): boolean => {
+  return role === "peer_mentor";
+};
+
 export default function HomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState("User");
@@ -81,10 +85,17 @@ export default function HomePage() {
   const [assignedStudents, setAssignedStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
 
-  const fetchAssignedStudents = useCallback(async () => {
+  const fetchAssignedStudents = useCallback(async (role?: string) => {
     setLoadingStudents(true);
     try {
-      const response = await advisorAPI.getAssignedStudents();
+      let response;
+      if (role === "advisor") {
+        response = await advisorAPI.getAssignedStudents();
+      } else if (role === "peer_mentor") {
+        response = await mentorAPI.getAssignedStudents();
+      } else {
+        return;
+      }
       if (response.success) {
         setAssignedStudents(response.students || []);
       }
@@ -114,9 +125,9 @@ export default function HomePage() {
           setUserName(friendlyName);
         }
 
-        // Fetch assigned students if user is an advisor
-        if (isAdvisorRole(parsed.role)) {
-          fetchAssignedStudents();
+        // Fetch assigned students if user is an advisor or mentor
+        if (isAdvisorRole(parsed.role) || isMentorRole(parsed.role)) {
+          fetchAssignedStudents(parsed.role);
         }
       } catch (error) {
         console.warn("Unable to parse stored user", error);
@@ -126,6 +137,206 @@ export default function HomePage() {
 
   const greeting = useMemo(() => `Welcome ${userName}!`, [userName]);
   const isAdvisor = isAdvisorRole(user?.role);
+  const isMentor = isMentorRole(user?.role);
+
+  // Mentor view with assigned students and recent messages
+  if (isMentor) {
+    return (
+      <div className="flex min-h-full flex-col bg-[#F4F6FF] pb-20">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#FF8F6B] to-[#C64B27] pb-16 pt-24 text-white shadow-[0_6px_30px_rgba(18,8,75,0.2)]">
+          <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-6">
+            <div>
+              <p className="text-sm text-white/70">Welcome back to DegreePlan.AI</p>
+              <p className="text-2xl font-semibold">{greeting}</p>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/80">
+                Support your assigned students, share your experience, and help guide their academic journey.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-8 px-6 pb-10 pt-6">
+          {/* Assigned Students Section */}
+          <div className="rounded-3xl bg-white p-6 shadow-lg shadow-[rgba(18,8,75,0.08)]">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-orange-100 p-2">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 text-orange-600"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.6}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.003.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.58A13.978 13.978 0 0 1 4.172 9H7m4 0a5 5 0 0 1 5-5v2a5 5 0 0 1-5 5m-4 0h4m0 0v4m0-4h4m-4 0H3"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-[var(--dark-navy)]">Assigned Students</h2>
+              </div>
+              <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-600">
+                {assignedStudents.length}
+              </span>
+            </div>
+            
+            {loadingStudents ? (
+              <div className="py-8 text-center text-gray-500">Loading students...</div>
+            ) : assignedStudents.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-gray-500">No students assigned yet.</p>
+                <p className="mt-2 text-sm text-gray-400">
+                  Students will appear here once they are assigned to you by an administrator.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {assignedStudents.map((student) => (
+                  <Link
+                    key={student._id}
+                    href={`/chat?student=${student._id}`}
+                    className="block rounded-2xl border border-gray-200 bg-gray-50/50 p-4 transition hover:border-orange-300 hover:bg-gray-50 hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-[var(--dark-navy)]">{student.fullName}</h3>
+                        <p className="mt-1 text-sm text-gray-600">{student.email}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {student.major && (
+                            <span className="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-600">
+                              {student.major}
+                            </span>
+                          )}
+                          {student.classification && (
+                            <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+                              {student.classification}
+                            </span>
+                          )}
+                          {student.school && (
+                            <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+                              {student.school}
+                            </span>
+                          )}
+                        </div>
+                        {student.advisor && (
+                          <p className="mt-2 text-xs text-gray-500">
+                            Advisor: {student.advisor.fullName}
+                          </p>
+                        )}
+                      </div>
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.6}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recent Messages Section */}
+          <div className="rounded-3xl bg-white p-6 shadow-lg shadow-[rgba(18,8,75,0.08)]">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-emerald-100 p-2">
+                  <Envelope size={20} weight="duotone" className="text-emerald-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-[var(--dark-navy)]">Recent Messages</h2>
+              </div>
+              <Link
+                href="/chat"
+                className="text-sm font-medium text-[var(--primary-blue)] hover:text-[var(--primary-blue-light)]"
+              >
+                View all
+              </Link>
+            </div>
+
+            {staticRecentMessages.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-gray-500">No recent messages.</p>
+                <p className="mt-2 text-sm text-gray-400">
+                  Messages you send to students will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {staticRecentMessages.map((message) => (
+                  <Link
+                    key={message.id}
+                    href={`/chat?student=${message.id}`}
+                    className="block rounded-2xl border border-gray-200 bg-gray-50/50 p-4 transition hover:border-emerald-300 hover:bg-gray-50 hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-[var(--dark-navy)] truncate">
+                            {message.studentName}
+                          </h3>
+                          {message.unread && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{message.studentEmail}</p>
+                        <p className="mt-2 text-sm font-medium text-emerald-600">{message.subject}</p>
+                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{message.preview}</p>
+                      </div>
+                      <div className="ml-3 flex flex-col items-end gap-1">
+                        <span className="text-xs text-gray-400 whitespace-nowrap">{message.timestamp}</span>
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.6}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Resources Section */}
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[var(--dark-navy)]">Resources</h3>
+              <Link href="/resources" className="text-sm font-medium text-[var(--primary-blue)] hover:text-[var(--primary-blue-light)]">
+                View all
+              </Link>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {quickResources.map((resource) => (
+                <Link
+                  key={resource.title}
+                  href={resource.href}
+                  className="flex min-w-[160px] flex-col gap-3 rounded-2xl bg-white p-4 text-[var(--dark-navy)] shadow-md shadow-[rgba(18,8,75,0.05)] transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <span className="text-sm font-semibold">{resource.title}</span>
+                  <div className="flex items-center gap-2 text-xs font-medium text-[var(--primary-blue)]">
+                    Open
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 17 17 7M9 7h8v8" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   // Advisor view with assigned students and recent messages
   if (isAdvisor) {
