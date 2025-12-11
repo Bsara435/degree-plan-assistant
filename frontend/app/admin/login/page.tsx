@@ -81,20 +81,12 @@ export default function AdminLoginPage() {
     try {
       const response = await adminAPI.loginStep1(formState.adminId, formState.password);
 
-      if (response?.success && response?.userId) {
-        localStorage.setItem("adminLoginUserId", response.userId);
-        localStorage.setItem("adminLoginAdminId", formState.adminId);
-        if (response.email) {
-          localStorage.setItem("adminLoginEmail", response.email);
-        }
-        if (response.loginCode) {
-          localStorage.setItem("adminLoginDevCode", response.loginCode);
-        } else {
-          localStorage.removeItem("adminLoginDevCode");
-        }
-        router.replace("/admin/login/verify");
+      if (response?.success && response?.token && response?.user) {
+        localStorage.setItem("token", response.token);
+        localStorage.setItem("user", JSON.stringify(response.user));
+        router.replace("/admin/dashboard");
       } else {
-        throw new Error(response?.message || "Unable to send verification code.");
+        throw new Error(response?.message || "Unable to log in.");
       }
     } catch (error: any) {
       console.error("Admin login error:", error);

@@ -109,14 +109,6 @@ export const adminAPI = {
     return response.data;
   },
 
-  loginStep2: async (userId: string, code: string) => {
-    const response = await api.post("/admin/login/verify", {
-      userId,
-      code,
-    });
-    return response.data;
-  },
-
   listStudents: async () => {
     const response = await api.get("/admin/students");
     return response.data;

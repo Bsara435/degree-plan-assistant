@@ -41,24 +41,20 @@ export const adminLoginStep1 = async (req, res) => {
       });
     }
 
-    const loginCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const loginCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
-
-    adminUser.loginCode = loginCode;
-    adminUser.loginCodeExpires = loginCodeExpires;
-    await adminUser.save();
-
-    try {
-      await sendConfirmationEmail(adminUser.email, loginCode);
-    } catch (emailError) {
-      // Continue even if email fails
-    }
+    // Direct login: issue JWT without verification code
+    const token = generateToken(adminUser._id);
 
     return res.status(200).json({
       success: true,
-      message: "Verification code sent to admin email.",
-      userId: adminUser._id,
-      email: adminUser.email,
+      message: "Admin login successful.",
+      token,
+      user: {
+        id: adminUser._id,
+        adminId: adminUser.adminId,
+        email: adminUser.email,
+        fullName: adminUser.fullName,
+        role: adminUser.role,
+      },
     });
   } catch (error) {
     console.error("Admin login error:", error.message);
