@@ -333,6 +333,6 @@ Admin dashboard → Select student → Promote to mentor → Role updated
 
 ---
 
-**Last Updated**: December 2024  
+**Last Updated**: December 2025  
 **Status**: ⚠️ Roles partially implemented, critical fixes needed
 
