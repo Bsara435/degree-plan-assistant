@@ -253,6 +253,63 @@ The application includes the CLE (Center for Language Enhancement) logo from Al 
 
 ---
 
-**Last Updated**: October 18, 2025  
+## Recent Updates
+
+### Chat UI Improvements (Current Session)
+
+#### ✅ Completed Features
+
+1. **Enhanced Chat Interface**
+   - Sender messages displayed on the right with blue gradient
+   - Receiver messages displayed on the left with white background
+   - Avatar circles with user initials for visual identification
+   - Improved message bubble styling with rounded corners
+   - Read receipt indicators for sent messages
+   - Typing indicator with animated dots
+   - Modern, clean design following messaging app patterns
+
+2. **File Upload Functionality**
+   - Added `+` button for file uploads
+   - Supports images, PDFs, and Word documents
+   - Ready for API integration
+   - Styled to match chat interface
+
+3. **Dynamic Landing Pages**
+   - Removed static/hardcoded message data
+   - Advisor and mentor pages now fetch real conversations
+   - Shows 5 most recent conversations
+   - Displays unread message indicators
+   - Proper timestamp formatting (e.g., "2h ago", "Yesterday")
+   - Loading and empty states
+
+4. **Major Enum Validation Fix**
+   - Fixed validation errors for "Business Administration" and other common major names
+   - Added comprehensive alias mappings
+   - Automatic normalization to full enum values
+   - Backward compatible with existing data
+
+#### Files Modified
+- `frontend/app/(main)/home/page.tsx` - Dynamic conversations
+- `frontend/app/(main)/chat/[id]/page.tsx` - Enhanced chat UI
+- `backend/src/models/User.js` - Major enum aliases
+
+#### Design Improvements
+- **Color Scheme:**
+  - Sender: Blue gradient (`#0345A0` to `#2F41AA`)
+  - Receiver: White with gray border
+  - Avatars: Gradient backgrounds (blue for sender, emerald for receiver)
+
+- **UI Elements:**
+  - Improved header with user avatar and online status
+  - Better date separators with pill-style badges
+  - Enhanced input styling with focus states
+  - Icon-based send button (paper plane)
+  - Modern spacing and shadows
+
+For detailed documentation, see: [Chat UI Improvements Documentation](../CHAT-UI-IMPROVEMENTS.md)
+
+---
+
+**Last Updated**: Current Session  
 **Designer**: Design Team  
-**Status**: ✅ Signup UI designed and ready for implementation
+**Status**: ✅ Signup UI designed and ready for implementation | ✅ Chat UI improvements completed

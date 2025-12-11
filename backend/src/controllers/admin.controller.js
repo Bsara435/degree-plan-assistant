@@ -30,7 +30,6 @@ export const adminLoginStep1 = async (req, res) => {
       }
       return res.status(401).json({ 
         message: "Invalid admin ID or password.",
-        hint: process.env.NODE_ENV === "development" ? `No admin found with adminId: "${adminId}"` : undefined
       });
     }
 
@@ -39,7 +38,6 @@ export const adminLoginStep1 = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ 
         message: "Invalid admin ID or password.",
-        hint: process.env.NODE_ENV === "development" ? "Password does not match" : undefined
       });
     }
 
@@ -52,11 +50,8 @@ export const adminLoginStep1 = async (req, res) => {
 
     try {
       await sendConfirmationEmail(adminUser.email, loginCode);
-      console.log(`Admin login code sent to ${adminUser.email} (code: ${loginCode})`);
     } catch (emailError) {
-      console.warn(
-        `Admin login code email failed to send. Code: ${loginCode}. Error: ${emailError?.message}`
-      );
+      // Continue even if email fails
     }
 
     return res.status(200).json({
@@ -64,9 +59,6 @@ export const adminLoginStep1 = async (req, res) => {
       message: "Verification code sent to admin email.",
       userId: adminUser._id,
       email: adminUser.email,
-      ...(process.env.NODE_ENV === "development"
-        ? { loginCode, devNote: "Code included in response for development mode." }
-        : {}),
     });
   } catch (error) {
     console.error("Admin login error:", error.message);
@@ -602,7 +594,6 @@ export const createAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while creating admin user.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

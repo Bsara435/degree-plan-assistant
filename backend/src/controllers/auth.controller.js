@@ -39,13 +39,11 @@ export const signUpStep1 = async (req, res) => {
       // adminId is not set - only admins have this field
     });
 
-    // Send confirmation email (skip if credentials not configured)
+    // Send confirmation email
     try {
       await sendConfirmationEmail(email, confirmationCode);
-      console.log(`Confirmation email sent to ${email} (code: ${confirmationCode})`);
     } catch (emailError) {
-      console.warn(`  Email not sent (credentials not configured). Confirmation code: ${confirmationCode}`);
-      // Continue signup even if email fails in development
+      // Continue signup even if email fails
     }
 
     res.status(201).json({
@@ -53,11 +51,6 @@ export const signUpStep1 = async (req, res) => {
       message:
         "Signup step 1 complete. A confirmation code has been sent to your email.",
       userId: newUser._id,
-      // Include confirmation code in development mode for testing
-      ...(process.env.NODE_ENV === 'development' && { 
-        confirmationCode: confirmationCode,
-        devNote: "Confirmation code included because NODE_ENV=development"
-      }),
     });
   } catch (error) {
     console.error("Signup error:", error.message);
@@ -67,16 +60,12 @@ export const signUpStep1 = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Database configuration error. Please contact administrator.",
-        error: process.env.NODE_ENV === "development" 
-          ? "adminId index issue. Run fixAdminIdIndex.js script." 
-          : undefined,
       });
     }
     
     res.status(500).json({
       success: false,
       message: "Server error during signup. Please try again later.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -110,8 +99,6 @@ export const signUpStep2 = async (req, res) => {
     user.isConfirmed = true;
     user.confirmationCode = null;
     await user.save();
-
-    console.log(`User ${user.email} confirmed successfully.`);
 
     res.status(200).json({
       success: true,
@@ -192,15 +179,11 @@ export const completeProfileStep3 = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Database configuration error. Please contact administrator.",
-        error: process.env.NODE_ENV === "development" 
-          ? "adminId index issue. Run fixAdminIdIndex.js script." 
-          : undefined,
       });
     }
     
     res.status(500).json({ 
       message: "Server error during profile completion.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -258,21 +241,14 @@ export const loginStep1 = async (req, res) => {
     // Send verification code via email
     try {
       await sendConfirmationEmail(user.email, loginCode);
-      console.log(`📧 Login verification code sent to ${user.email} (code: ${loginCode})`);
     } catch (emailError) {
-      console.warn(`⚠️  Email not sent. Login code: ${loginCode}`);
-      // Continue even if email fails in development
+      // Continue even if email fails
     }
 
     res.status(200).json({
       success: true,
       message: "Login verification code sent to your email.",
       userId: user._id,
-      // Include code in development mode for testing
-      ...(process.env.NODE_ENV === 'development' && { 
-        loginCode: loginCode,
-        devNote: "Login code included because NODE_ENV=development"
-      }),
     });
   } catch (error) {
     console.error("❌ Login error:", error.message);
@@ -282,16 +258,12 @@ export const loginStep1 = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Database configuration error. Please contact administrator.",
-        error: process.env.NODE_ENV === "development" 
-          ? "adminId index issue. Run fixAdminIdIndex.js script." 
-          : undefined,
       });
     }
     
     res.status(500).json({
       success: false,
       message: "Server error during login. Please try again later.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -380,8 +352,6 @@ export const loginStep2 = async (req, res) => {
     // Generate JWT token
     const token = generateToken(user._id);
 
-    console.log(`✅ User ${user.email} logged in successfully.`);
-
     res.status(200).json({
       success: true,
       message: "Login successful!",
@@ -408,16 +378,12 @@ export const loginStep2 = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Database configuration error. Please contact administrator.",
-        error: process.env.NODE_ENV === "development" 
-          ? "adminId index issue. Run fixAdminIdIndex.js script." 
-          : undefined,
       });
     }
     
     res.status(500).json({
       success: false,
       message: "Server error during login verification. Please try again later.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
