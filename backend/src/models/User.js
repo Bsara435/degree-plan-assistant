@@ -3,10 +3,38 @@ import { ALL_MAJORS } from "../constants/majors.js";
 
 // Major alias mapping - maps common aliases to full enum values
 const MAJOR_ALIASES = {
+  // Computer Science aliases
   "Computer Science": "Computer Science (BSCS / BSCSC)", // Default to undergraduate
   "CS": "Computer Science (BSCS / BSCSC)",
   "Computer Science Undergraduate": "Computer Science (BSCS / BSCSC)",
   "Computer Science Graduate": "Computer Science (MSc)",
+  
+  // Business Administration aliases
+  "Business Administration": "Bachelor of Business Administration (BBA) - Management", // Default to Management
+  "BBA": "Bachelor of Business Administration (BBA) - Management",
+  "Business Admin": "Bachelor of Business Administration (BBA) - Management",
+  "MBA": "Master of Business Administration (MBA)",
+  "Master of Business Administration": "Master of Business Administration (MBA)",
+  
+  // Engineering aliases
+  "Engineering": "General Engineering (BSGE)",
+  "General Engineering": "General Engineering (BSGE)",
+  
+  // International Studies aliases
+  "International Studies": "International Studies (B.A.)",
+  "IS": "International Studies (B.A.)",
+  
+  // Communication Studies aliases
+  "Communication Studies": "Communication Studies (B.A.)",
+  "Communication": "Communication Studies (B.A.)",
+  
+  // Psychology aliases
+  "Psychology": "Psychology (B.A.)",
+  
+  // Human Resource Development aliases
+  "Human Resource Development": "Human Resource Development (B.Sc.)",
+  "HRD": "Human Resource Development (B.Sc.)",
+  "Human Resources": "Human Resource Development (B.Sc.)",
 };
 
 const userSchema = new mongoose.Schema(

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { advisorAPI, mentorAPI } from "../../../lib/api";
+import { advisorAPI, mentorAPI, chatAPI, Conversation } from "../../../lib/api";
 import { Envelope } from "@phosphor-icons/react";
 
 type StoredUser = {
@@ -36,33 +36,40 @@ type RecentMessage = {
   unread?: boolean;
 };
 
-// Static recent messages data
-const staticRecentMessages: RecentMessage[] = [
-  {
-    id: "1",
-    studentName: "Ahmed Benali",
-    studentEmail: "a.benali@aui.ma",
-    subject: "Degree Plan Review",
-    preview: "I've reviewed your degree plan and made some recommendations for your next semester...",
-    timestamp: "2h ago",
-  },
-  {
-    id: "2",
-    studentName: "Fatima Alami",
-    studentEmail: "f.alami@aui.ma",
-    subject: "Course Selection Advice",
-    preview: "Based on your major requirements, I suggest taking CS 301 and MATH 205 next semester...",
-    timestamp: "Yesterday",
-  },
-  {
-    id: "3",
-    studentName: "Youssef Idrissi",
-    studentEmail: "y.idrissi@aui.ma",
-    subject: "Academic Progress Check",
-    preview: "Great progress this semester! Your GPA has improved significantly. Let's discuss...",
-    timestamp: "2 days ago",
-  },
-];
+// Helper function to format timestamp
+const formatTimestamp = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInHours < 1) {
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    return diffInMinutes <= 1 ? "Just now" : `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  } else if (diffInDays === 1) {
+    return "Yesterday";
+  } else if (diffInDays < 7) {
+    return `${diffInDays}d ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+};
+
+// Transform conversation to RecentMessage format
+const transformConversationToRecentMessage = (conversation: Conversation): RecentMessage => {
+  return {
+    id: conversation.partner._id,
+    studentName: conversation.partner.fullName,
+    studentEmail: conversation.partner.email,
+    subject: "Conversation", // Default subject, can be enhanced later
+    preview: conversation.lastMessage || "No messages yet",
+    timestamp: formatTimestamp(conversation.lastMessageTime),
+    unread: conversation.unreadCount > 0,
+  };
+};
 
 const quickResources = [
   { title: "Academic Flowcharts", href: "/resources#flowcharts" },
@@ -84,6 +91,8 @@ export default function HomePage() {
   const [user, setUser] = useState<StoredUser | null>(null);
   const [assignedStudents, setAssignedStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   const fetchAssignedStudents = useCallback(async (role?: string) => {
     setLoadingStudents(true);
@@ -103,6 +112,24 @@ export default function HomePage() {
       console.error("Failed to fetch assigned students:", error);
     } finally {
       setLoadingStudents(false);
+    }
+  }, []);
+
+  const fetchConversations = useCallback(async () => {
+    setLoadingMessages(true);
+    try {
+      const response = await chatAPI.getConversations();
+      if (response.success) {
+        const transformed = response.conversations
+          .map(transformConversationToRecentMessage)
+          .slice(0, 5); // Show only the 5 most recent
+        setRecentMessages(transformed);
+      }
+    } catch (error) {
+      console.error("Failed to fetch conversations:", error);
+      setRecentMessages([]);
+    } finally {
+      setLoadingMessages(false);
     }
   }, []);
 
@@ -128,12 +155,13 @@ export default function HomePage() {
         // Fetch assigned students if user is an advisor or mentor
         if (isAdvisorRole(parsed.role) || isMentorRole(parsed.role)) {
           fetchAssignedStudents(parsed.role);
+          fetchConversations();
         }
       } catch (error) {
         console.warn("Unable to parse stored user", error);
       }
     }
-  }, [router, fetchAssignedStudents]);
+  }, [router, fetchAssignedStudents, fetchConversations]);
 
   const greeting = useMemo(() => `Welcome ${userName}!`, [userName]);
   const isAdvisor = isAdvisorRole(user?.role);
@@ -259,7 +287,9 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {staticRecentMessages.length === 0 ? (
+            {loadingMessages ? (
+              <div className="py-8 text-center text-gray-500">Loading conversations...</div>
+            ) : recentMessages.length === 0 ? (
               <div className="py-8 text-center">
                 <p className="text-gray-500">No recent messages.</p>
                 <p className="mt-2 text-sm text-gray-400">
@@ -268,10 +298,10 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {staticRecentMessages.map((message) => (
+                {recentMessages.map((message) => (
                   <Link
                     key={message.id}
-                    href={`/chat?student=${message.id}`}
+                    href={`/chat/${message.id}`}
                     className="block rounded-2xl border border-gray-200 bg-gray-50/50 p-4 transition hover:border-emerald-300 hover:bg-gray-50 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between">
@@ -458,7 +488,9 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {staticRecentMessages.length === 0 ? (
+            {loadingMessages ? (
+              <div className="py-8 text-center text-gray-500">Loading conversations...</div>
+            ) : recentMessages.length === 0 ? (
               <div className="py-8 text-center">
                 <p className="text-gray-500">No recent messages.</p>
                 <p className="mt-2 text-sm text-gray-400">
@@ -467,10 +499,10 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {staticRecentMessages.map((message) => (
+                {recentMessages.map((message) => (
                   <Link
                     key={message.id}
-                    href={`/chat?student=${message.id}`}
+                    href={`/chat/${message.id}`}
                     className="block rounded-2xl border border-gray-200 bg-gray-50/50 p-4 transition hover:border-emerald-300 hover:bg-gray-50 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between">

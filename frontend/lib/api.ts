@@ -216,4 +216,129 @@ export const sendAdvisingRequest = async (
   }
 }
 
+// --- CHAT API ---
+
+export type Conversation = {
+  partner: {
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+};
+
+export type Message = {
+  _id: string;
+  sender: {
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
+  receiver: {
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
+  message: string;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Contact = {
+  _id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  relationship: "advisor" | "mentor" | "student";
+  major?: string;
+  classification?: string;
+  mentor?: {
+    _id: string;
+    fullName: string;
+    email: string;
+  } | null;
+  advisor?: {
+    _id: string;
+    fullName: string;
+    email: string;
+  } | null;
+};
+
+export const chatAPI = {
+  // Get assigned contacts (advisor/mentor for students, assigned students for advisors/mentors)
+  getAssignedContacts: async (): Promise<{ success: boolean; contacts: Contact[] }> => {
+    const response = await api.get('/chat/contacts');
+    return response.data;
+  },
+
+  // Get all conversations
+  getConversations: async (): Promise<{ success: boolean; conversations: Conversation[] }> => {
+    const response = await api.get('/chat/conversations');
+    return response.data;
+  },
+
+  // Get messages between current user and another user
+  getMessages: async (
+    otherUserId: string,
+    page: number = 1,
+    limit: number = 50
+  ): Promise<{
+    success: boolean;
+    messages: Message[];
+    otherUser: {
+      _id: string;
+      fullName: string;
+      email: string;
+      role: string;
+    };
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+    };
+  }> => {
+    const response = await api.get(`/chat/messages/${otherUserId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  // Send a message via REST API
+  sendMessage: async (
+    receiverId: string,
+    message: string
+  ): Promise<{ success: boolean; message: Message }> => {
+    const response = await api.post('/chat/send', {
+      receiverId,
+      message,
+    });
+    return response.data;
+  },
+
+  // Mark messages as read
+  markAsRead: async (senderId: string): Promise<{ success: boolean; count: number }> => {
+    const response = await api.put(`/chat/read/${senderId}`);
+    return response.data;
+  },
+
+  // Get unread message count
+  getUnreadCount: async (): Promise<{ success: boolean; unreadCount: number }> => {
+    const response = await api.get('/chat/unread');
+    return response.data;
+  },
+
+  // Delete a message
+  deleteMessage: async (messageId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/chat/message/${messageId}`);
+    return response.data;
+  },
+};
+
 export default api;
