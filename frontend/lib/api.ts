@@ -40,10 +40,11 @@ api.interceptors.response.use(
 // Auth API functions
 export const authAPI = {
   // Signup Step 1: Create account with email and password
-  signupStep1: async (email: string, password: string) => {
+  signupStep1: async (email: string, password: string, role?: string) => {
     const response = await api.post('/auth/signup/step1', {
       email,
       password,
+      ...(role && { role }),
     });
     return response.data;
   },

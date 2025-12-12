@@ -319,7 +319,7 @@ EMAIL_FROM=your-email@gmail.com
   loginCodeExpires: Date (nullable, default: null),
   role: String (enum: ["student", "peer_mentor", "fye_teacher", "admin"], default: "student"),
   fullName: String,
-  school: String (enum: ["SSE", "SSAH", "SBA"]),
+  school: String (enum: ["SSE", "SHAS", "SBA"]),
   major: String (nullable, student only),
   classification: String (nullable, student only),
   timestamps: true (createdAt, updatedAt)
@@ -398,7 +398,7 @@ EMAIL_FROM=your-email@gmail.com
 - ✅ **JWT tokens for session management** - Tokens expire in 7 days
 - ✅ **Secure token verification** - Middleware validates all tokens
 - ✅ **Password not returned** - User model excludes password in queries (`select: false`)
-- ✅ **School enum validation** - Only accepts SSE, SSAH, or SBA
+- ✅ **School enum validation** - Only accepts SSE, SHAS, or SBA
 - ✅ **Role-based user types** - student, peer_mentor, fye_teacher, admin
 - 🔄 **Rate limiting** on auth endpoints (to be implemented)
 - 🔄 **Password strength requirements** (to be considered)

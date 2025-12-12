@@ -7,7 +7,7 @@ import { generateToken } from "../utils/generateToken.js"; // add this import
 // STEP 1: Sign up with email & password
 export const signUpStep1 = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     // Basic validation
     if (!email || !password) {
@@ -15,6 +15,10 @@ export const signUpStep1 = async (req, res) => {
         .status(400)
         .json({ message: "Please provide both email and password." });
     }
+
+    // Validate role if provided
+    const validRoles = ["student", "peer_mentor", "fye_teacher"];
+    const userRole = role && validRoles.includes(role) ? role : "student";
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -36,6 +40,7 @@ export const signUpStep1 = async (req, res) => {
       password: hashedPassword,
       confirmationCode,
       isConfirmed: false,
+      role: userRole, // Set role during signup
       // adminId is not set - only admins have this field
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authAPI } from "../../../lib/api";
@@ -8,6 +8,9 @@ import { SCHOOLS, MAJORS_BY_SCHOOL } from "../../../lib/constants/majors";
 
 export default function CompleteProfile() {
   const router = useRouter();
+  // Get role from localStorage (set during signup)
+  const [userRole, setUserRole] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     fullName: "",
     school: "",
@@ -21,6 +24,12 @@ export default function CompleteProfile() {
     classification: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load role from localStorage on mount
+  useEffect(() => {
+    const role = localStorage.getItem('signupRole') || 'student';
+    setUserRole(role);
+  }, []);
 
   // Get majors filtered by selected school
   const availableMajors = useMemo(() => {
@@ -111,15 +120,20 @@ export default function CompleteProfile() {
       setIsSubmitting(false);
       return;
     }
-    if (!formData.major) {
-      setErrors(prev => ({ ...prev, major: "Major is required" }));
-      setIsSubmitting(false);
-      return;
-    }
-    if (!formData.classification) {
-      setErrors(prev => ({ ...prev, classification: "Classification is required" }));
-      setIsSubmitting(false);
-      return;
+    
+    // Only validate student fields if role is student
+    const isStudent = userRole === "student";
+    if (isStudent) {
+      if (!formData.major) {
+        setErrors(prev => ({ ...prev, major: "Major is required" }));
+        setIsSubmitting(false);
+        return;
+      }
+      if (!formData.classification) {
+        setErrors(prev => ({ ...prev, classification: "Classification is required" }));
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     try {
@@ -129,13 +143,25 @@ export default function CompleteProfile() {
         throw new Error('User ID not found. Please start the signup process again.');
       }
 
-      // Call backend API to complete profile
-      const response = await authAPI.signupStep3(userId, {
+      // Prepare profile data - only include student fields if role is student
+      const isStudent = userRole === "student";
+      const profileData: {
+        fullName: string;
+        school: string;
+        major?: string;
+        classification?: string;
+      } = {
         fullName: formData.fullName,
         school: formData.school,
-        major: formData.major,
-        classification: formData.classification
-      });
+      };
+      
+      if (isStudent) {
+        profileData.major = formData.major;
+        profileData.classification = formData.classification;
+      }
+
+      // Call backend API to complete profile
+      const response = await authAPI.signupStep3(userId, profileData);
       
       if (response.success) {
         // Store user data and token
@@ -146,6 +172,8 @@ export default function CompleteProfile() {
         localStorage.removeItem('signupUserId');
         localStorage.removeItem('signupEmail');
         localStorage.removeItem('signupVerificationComplete');
+        localStorage.removeItem('signupRole');
+        localStorage.removeItem('signupRoleDisplay');
         
         alert("Profile completed successfully!");
         
@@ -295,126 +323,130 @@ export default function CompleteProfile() {
             )}
           </div>
 
-          {/* Major Field */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-[var(--dark-navy)]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Major Field - Only show for students */}
+          {userRole === "student" && (
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-[var(--dark-navy)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14l9-5-9-5-9 5 9 5z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                  />
+                </svg>
+              </div>
+              <select
+                name="major"
+                value={formData.major}
+                onChange={(e) => handleDropdownChange('major', e.target.value)}
+                disabled={!formData.school}
+                className={`w-full pl-12 pr-10 py-4 bg-white border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-gray-900 appearance-none ${
+                  errors.major ? 'border-red-500' : 'border-gray-200'
+                } ${!formData.school ? 'opacity-50 cursor-not-allowed' : ''}`}
+                required
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 14l9-5-9-5-9 5 9 5z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                />
-              </svg>
-            </div>
-            <select
-              name="major"
-              value={formData.major}
-              onChange={(e) => handleDropdownChange('major', e.target.value)}
-              disabled={!formData.school}
-              className={`w-full pl-12 pr-10 py-4 bg-white border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-gray-900 appearance-none ${
-                errors.major ? 'border-red-500' : 'border-gray-200'
-              } ${!formData.school ? 'opacity-50 cursor-not-allowed' : ''}`}
-              required
-            >
-              <option value="">
-                {formData.school ? "Major" : "Select a school first"}
-              </option>
-              {availableMajors.map((major, index) => (
-                <option key={index} value={major}>
-                  {major}
+                <option value="">
+                  {formData.school ? "Major" : "Select a school first"}
                 </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-[var(--dark-navy)]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+                {availableMajors.map((major, index) => (
+                  <option key={index} value={major}>
+                    {major}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-[var(--dark-navy)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+              {errors.major && (
+                <p className="text-red-500 text-sm mt-1">{errors.major}</p>
+              )}
             </div>
-            {errors.major && (
-              <p className="text-red-500 text-sm mt-1">{errors.major}</p>
-            )}
-          </div>
+          )}
 
-          {/* Classification Field */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-[var(--dark-navy)]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Classification Field - Only show for students */}
+          {userRole === "student" && (
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-[var(--dark-navy)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14l9-5-9-5-9 5 9 5z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                  />
+                </svg>
+              </div>
+              <select
+                name="classification"
+                value={formData.classification}
+                onChange={(e) => handleDropdownChange('classification', e.target.value)}
+                className={`w-full pl-12 pr-10 py-4 bg-white border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-gray-900 appearance-none ${
+                  errors.classification ? 'border-red-500' : 'border-gray-200'
+                }`}
+                required
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 14l9-5-9-5-9 5 9 5z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                />
-              </svg>
+                <option value="">Classification</option>
+                {classifications.map((classification, index) => (
+                  <option key={index} value={classification}>
+                    {classification}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-[var(--dark-navy)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+              {errors.classification && (
+                <p className="text-red-500 text-sm mt-1">{errors.classification}</p>
+              )}
             </div>
-            <select
-              name="classification"
-              value={formData.classification}
-              onChange={(e) => handleDropdownChange('classification', e.target.value)}
-              className={`w-full pl-12 pr-10 py-4 bg-white border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] focus:border-transparent text-gray-900 appearance-none ${
-                errors.classification ? 'border-red-500' : 'border-gray-200'
-              }`}
-              required
-            >
-              <option value="">Classification</option>
-              {classifications.map((classification, index) => (
-                <option key={index} value={classification}>
-                  {classification}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-[var(--dark-navy)]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-            {errors.classification && (
-              <p className="text-red-500 text-sm mt-1">{errors.classification}</p>
-            )}
-          </div>
+          )}
 
           {/* Finalise Button */}
           <button

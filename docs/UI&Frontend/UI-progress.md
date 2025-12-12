@@ -131,7 +131,7 @@ The complete signup user interface has been designed in Figma, including:
 
 #### Page 3: Profile Completion
 - Full name input
-- School dropdown (SSE, SSAH, SBA)
+- School dropdown (SSE, SHAS, SBA)
 - Major input (for students)
 - Classification dropdown (for students)
 - Role selection

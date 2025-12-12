@@ -1,24 +1,32 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { mapFrontendToBackendRole, getRoleDisplayName } from "../../../lib/auth";
 
 export default function SignupConfirmation() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const role = searchParams.get("role");
 
-  const getRoleDisplayName = (role: string | null) => {
-    switch (role) {
-      case "student":
-        return "Student";
-      case "mentor":
-        return "Peer Mentor";
-      case "fye-teacher":
-        return "FYE Instructor";
-      default:
-        return "User";
+  // Store role in localStorage and redirect to create-account
+  useEffect(() => {
+    if (role) {
+      const backendRole = mapFrontendToBackendRole(role);
+      localStorage.setItem("signupRole", backendRole);
+      // Store frontend role for display purposes
+      localStorage.setItem("signupRoleDisplay", role);
+    } else {
+      // If no role, default to student
+      localStorage.setItem("signupRole", "student");
+      localStorage.setItem("signupRoleDisplay", "student");
     }
+  }, [role]);
+
+  const handleContinue = () => {
+    router.push("/signup/create-account");
   };
 
   return (
@@ -65,8 +73,11 @@ export default function SignupConfirmation() {
         </div>
 
         {/* Submit Button */}
-        <button className="w-full bg-[var(--primary-blue)] hover:bg-[var(--primary-blue-light)] text-white font-medium py-4 px-6 rounded-xl transition-colors duration-200 mb-4">
-          Create Account
+        <button 
+          onClick={handleContinue}
+          className="w-full bg-[var(--primary-blue)] hover:bg-[var(--primary-blue-light)] text-white font-medium py-4 px-6 rounded-xl transition-colors duration-200 mb-4"
+        >
+          Continue to Create Account
         </button>
 
         {/* Back Button */}

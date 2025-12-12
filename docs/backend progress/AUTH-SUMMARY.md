@@ -123,7 +123,7 @@ The system supports 4 user roles:
 Users must select one of these schools:
 
 - **SSE** - School of Science and Engineering
-- **SSAH** - School of Social Sciences, Arts and Humanities
+- **SHAS** - School of Humanities and Social Sciences
 - **SBA** - School of Business Administration
 
 ---

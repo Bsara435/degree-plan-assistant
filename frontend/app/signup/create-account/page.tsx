@@ -107,8 +107,11 @@ export default function CreateAccount() {
 
     // If all validations pass, proceed with form submission
     try {
-      // Call backend API to create account
-      const response = await authAPI.signupStep1(formData.email, formData.password);
+      // Get role from localStorage (set during role selection)
+      const role = localStorage.getItem('signupRole') || 'student';
+      
+      // Call backend API to create account with role
+      const response = await authAPI.signupStep1(formData.email, formData.password, role);
       
       if (response.success) {
         // Store userId for verification step
@@ -116,6 +119,9 @@ export default function CreateAccount() {
         
         // Store email for display in verification page
         localStorage.setItem('signupEmail', formData.email);
+        
+        // Keep role in localStorage for profile completion
+        // (role is already stored, but ensure it persists)
         
         // Store confirmation code if provided (for debugging - development mode)
         if (response.confirmationCode) {
