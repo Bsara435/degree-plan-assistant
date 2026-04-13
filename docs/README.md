@@ -1,75 +1,66 @@
-# DariLik – AI-Powered Rental Matching Platform
+# Degree Plan Assistant
 
-> Built at a 48-hour hackathon to solve a real problem in Morocco's rental market.
+> A tool to help university students plan their academic path without the headache.
 
 ## The Problem
 
-Finding a trustworthy tenant in Morocco is largely guesswork. Landlords have no structured
-way to evaluate applicants, and tenants with good profiles get overlooked because there's
-no fair comparison system.
+Planning a 4-year degree at Al Akhawayn University is surprisingly complex. Course
+prerequisites overlap, semester availability changes, and one wrong choice can delay
+graduation by a full semester. Most students figure this out manually or rely on an
+advisor who's already stretched thin.
 
-## What We Built
+## What This Does
 
-DariLik analyzes tenant profiles and scores them based on financial stability, employment
-status, and compatibility with the listing. Landlords get a ranked shortlist instead of
-a pile of unstructured applications — powered by Google Generative AI and Claude.
+The Degree Plan Assistant takes a student's completed courses and generates a valid,
+optimized course sequence — respecting prerequisites, credit limits, and course
+availability per semester.
 
 ## My Contribution
 
-I led the backend development end-to-end:
-- Designed and implemented the **tenant scoring algorithm** — weighted criteria including
-  income stability, rental history, and profile completeness
-- Built the **FastAPI REST layer** that connects the frontend to the scoring engine
-  and AI models
-- Integrated **Google Generative AI and the Anthropic (Claude) API** for intelligent
-  tenant evaluation and recommendations
-- Managed **PostgreSQL database** schema, queries, and SQLAlchemy models
-- Handled all data validation using Pydantic and connected the backend to the
-  JavaScript frontend during the final hours of the hackathon
+- Built the **prerequisite validation logic** — checks whether a proposed schedule
+  violates dependency rules across the full course catalog
+- Designed the **course sequencing algorithm** that distributes courses across
+  semesters while respecting credit hour limits
+- Set up the **backend architecture** and contributed to the data model for courses,
+  prerequisites, and student progress
+- Configured **Docker** setup for consistent local development across the team
+- Worked with the **n8n workflow layer** for automating degree-check logic
 
 ## Tech Stack
 
-| Layer    | Technology                              |
-|----------|-----------------------------------------|
-| Backend  | Python, FastAPI, SQLAlchemy             |
-| AI       | Google Generative AI, Anthropic (Claude)|
-| Database | PostgreSQL                              |
-| Frontend | JavaScript, HTML, CSS                   |
-| Other    | Pydantic, uvicorn, REST APIs, Git       |
+| Layer      | Technology                        |
+|------------|-----------------------------------|
+| Language   | TypeScript, JavaScript            |
+| Backend    | Node.js                           |
+| Automation | n8n (workflow engine)             |
+| DevOps     | Docker, docker-compose            |
+| Frontend   | HTML, CSS, JavaScript             |
+| Other      | Git                               |
 
 ## How to Run
 
 ```bash
 # Clone the repo
-git clone https://github.com/Bsara435/darilik-ai-platform.git
-cd darilik-ai-platform
+git clone https://github.com/Bsara435/degree-plan-assistant.git
+cd degree-plan-assistant
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the backend
-cd backend
-uvicorn main:app --reload
-
-# Open the frontend
-cd ../frontend
-open index.html
+# Start all services with Docker
+docker-compose up
 ```
 
 ## Features
 
-- AI-powered tenant scoring using Google Generative AI and Claude
-- Profile comparison across multiple applicants
-- Data-driven recommendations for landlords
-- Clean REST API built with FastAPI
+- Validates course prerequisites automatically
+- Generates semester-by-semester plan
+- Flags scheduling conflicts
+- Supports different specializations
 
 ## What I'd Improve With More Time
 
-- Fine-tune the AI prompts with more real rental data from the Moroccan market
-- Add landlord authentication and a proper dashboard
-- Deploy the API and connect to real estate listing platforms
+- Pull live course data from the university catalog instead of a static list
+- Add a visual drag-and-drop planner interface
+- Export plans as PDF to share with academic advisors
 
-## Team
+## Built At
 
-Built collaboratively at a 48-hour hackathon. My role: backend, FastAPI, AI integration,
-database design, scoring logic.
+Al Akhawayn University, Ifrane — Academic tool project (2023)
